@@ -65,11 +65,17 @@ p {
   font-size: 5vmin; /* Schriftgröße basierend auf der Größe des Spielfelds */
 }
 
-button {
-  position: absolute;
+.button-container {
+  display: flex;
+  flex-direction: row;
   bottom: 1vmin;
   right: 1vmin;
+  position: absolute;
+}
+
+button {
   padding: 1vmin 2vmin;
+  margin: 1vmin;
   background-color: #4caf50;
   color: #fff;
   border: none;

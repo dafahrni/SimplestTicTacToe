@@ -33,6 +33,131 @@ class ElementBuilder {
   }
 }
 
+class FullScreen {
+  constructor() {
+    if (this._isFullscreenSupported) {
+      this._addButton();
+    }
+  }
+
+  get _isFullscreenSupported() {
+    // Überprüfen, ob das Fullscreen-API unterstützt wird
+    const element = document.documentElement;
+    return (
+      element.requestFullscreen ||
+      element.mozRequestFullScreen || // Firefox
+      element.webkitRequestFullscreen || // Chrome, Safari und Opera
+      element.msRequestFullscreen // Internet Explorer
+    );
+  }
+
+  _addButton() {
+    const button = document.getElementById("fullscreen-button");
+    button.textContent = "FULL SCR";
+    button.hidden = false;
+    button.addEventListener("click", () => this._handleFullscreenButtonClick());
+  }
+
+  _handleFullscreenButtonClick() {
+    const button = document.getElementById("fullscreen-button");
+    if (button.textContent !== "NORMAL") {
+      button.textContent = "NORMAL";
+      this._activateFullscreen();
+    } else {
+      button.textContent = "FULL SCR";
+      this._deactivateFullscreen();
+    }
+  }
+
+  _activateFullscreen() {
+    // Funktion, um den Vollbildmodus zu aktivieren
+    const element = document.documentElement;
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen();
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  }
+
+  _deactivateFullscreen() {
+    // Funktion, um den Vollbildmodus zu deaktivieren
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+}
+
+class LockScreen {
+  constructor() {
+    if (this._isLockScreenSupported) {
+      this._addButton();
+    }
+  }
+
+  get _isLockScreenSupported() {
+    return this._screenOrientation !== null;
+  }
+
+  _addButton() {
+    const button = document.getElementById("fixed-orientation-button");
+    button.textContent = `LOCK ${this._screenOrientation?.type.split("-")[0]}`;
+    button.hidden = false;
+    button.addEventListener("click", () => this._handleLockButtonClick());
+
+    window.addEventListener('deviceorientation', () => this._handleScreenOrientation());
+  }
+
+  get _isScreenLocked() {
+    return screen.orientation && screen.orientation.type === 'portrait-primary';
+  }
+
+  _handleLockButtonClick() {
+    const button = document.getElementById("fixed-orientation-button");
+    if (button.textContent !== "UNLOCK") {
+      button.textContent = "UNLOCK";
+    } else {
+      button.textContent = `LOCK ${
+        this._screenOrientation?.type.split("-")[0]
+      }`;
+    }
+  }
+
+  _handleScreenOrientation() {
+    const button = document.getElementById("fixed-orientation-button");
+    if (button.textContent !== "UNLOCK") {
+      this._unlockScreenOrientation()
+    } else {
+      this._lockScreenOrientation();
+    }
+  }
+
+  _lockScreenOrientation() {
+    if (this._screenOrientation && this._screenOrientation.lock) {
+      this._screenOrientation.lock(this._screenOrientation?.type);
+    }
+  }
+
+  _unlockScreenOrientation() {
+    if (this._screenOrientation && this._screenOrientation.unlock) {
+      this._screenOrientation.unlock();
+    }  
+  }
+
+  get _screenOrientation() {
+    return screen.orientation || screen.mozOrientation || screen.msOrientation;
+  }
+}
+
 class ModalDialog {
   constructor() {
     this._notification = null;
@@ -69,7 +194,7 @@ class ModalDialog {
     if (this._action) {
       this._action();
     } else {
-      console.log("Warning: As action is undefined, nothing is performed.");
+      console.warn("As action is undefined, nothing is performed.");
     }
 
     // Timeout zurücksetzen
@@ -96,10 +221,15 @@ class ModalDialog {
       .appendTo(this._notification)
       .getResult();
 
+    const bc = new ElementBuilder("div")
+      .setClass("button-container")
+      .appendTo(this._notification)
+      .getResult();
+
     this._button = new ElementBuilder("button")
       .setId("confirm")
       .setText("OK")
-      .appendTo(this._notification)
+      .appendTo(bc)
       .addListener("click", this._hideNotification.bind(this))
       .getResult();
   }
@@ -185,6 +315,8 @@ export class View {
     this._board = new Board(model);
     this._board.updateAll();
     this._dialog = new ModalDialog();
+    this._fullScreen = new FullScreen();
+    this._lockScreen = new LockScreen();
     this._ressources = {
       click: new Audio("resources/click.mp3"),
       clack: new Audio("resources/clack.mp3"),

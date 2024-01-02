@@ -27,18 +27,22 @@ export class Model {
   }
 
   changeCell(index) {
-    if (this._isValid(index)) {
-      this._cells[index].value = this.player;
-      console.log(this._asText);
-      return true;
+    if (!this._isValid(index)) {
+      return false;
     }
-    return false;
+    const cell = this._cells[index];
+    if (!cell.isEmpty) {
+      return false;
+    }
+    cell.value = this.player;
+    console.info(this._asText);
+    return true;
   }
 
   resetCells() {
     this._cells.forEach((c) => c.reset());
     this._player = "X";
-    console.log(this._asText);
+    console.info(this._asText);
   }
 
   checkForWinner() {
@@ -120,8 +124,8 @@ export class Model {
 
   _isValid(index) {
     if (index < 0 || index >= this.size) {
-      console.log(
-        `Error: Index ${index} outside of intervall [0..${this.size - 1}]`
+      console.error(
+        `Index ${index} outside of intervall [0..${this.size - 1}]`
       );
       return false;
     }
@@ -241,7 +245,7 @@ const grid = [
 const targetCount = 3;
 
 if (checkLines(grid, targetCount)) {
-  console.log(`Es gibt eine Linie von ${targetCount} gleichen Elementen.`);
+  console.info(`Row with ${targetCount} similar elements exists.`);
 } else {
-  console.log(`Es gibt keine Linie von ${targetCount} gleichen Elementen.`);
+  console.info(`No row with ${targetCount} similar elements exists.`);
 }
